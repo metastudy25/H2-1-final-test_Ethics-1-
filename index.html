@@ -1,5 +1,88 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>윤리와 사상 기말대비 퀴즈 | 이든</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--accent:#c9a84c;--correct:#2ea043;--wrong:#f85149;--text:#e6edf3;--dim:#8b949e;--border:#30363d;--navy:#1a1a3e;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;background:linear-gradient(135deg,var(--bg) 0%,var(--navy) 100%);min-height:100vh;color:var(--text);}
+#app{max-width:680px;margin:0 auto;}
+.hd{background:linear-gradient(90deg,var(--navy),#0d1530);padding:16px 20px;border-bottom:2.5px solid var(--accent);text-align:center;position:sticky;top:0;z-index:100;}
+.hd-logo{font-size:11px;color:var(--accent);letter-spacing:2px;font-weight:700;margin-bottom:3px;}
+.hd-title{font-size:20px;font-weight:900;background:linear-gradient(90deg,var(--accent),#f0d78c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.2;}
+.hd-sub{font-size:11px;color:var(--dim);margin-top:3px;}
+.body{padding:14px 14px 80px;}
+/* Cards */
+.unit-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .18s;}
+.unit-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 20px rgba(201,168,76,.15);}
+.unit-title{font-size:15px;font-weight:700;margin-bottom:3px;}
+.unit-sub{font-size:11px;color:var(--dim);margin-bottom:8px;}
+.badges{display:flex;gap:5px;flex-wrap:wrap;}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+/* Buttons */
+.btn{padding:12px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;}
+.btn-gold{background:linear-gradient(90deg,var(--accent),#dbb850);color:#000;}
+.btn-green{background:linear-gradient(90deg,var(--correct),#3fb950);color:#fff;}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--dim);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;}
+.btn-ghost:hover{color:var(--text);}
+.btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+/* Mode select */
+.mode-grid{display:flex;gap:8px;margin-top:12px;}
+.mode-btn{flex:1;padding:14px 6px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;text-align:center;line-height:1.5;transition:all .15s;}
+.mode-btn:hover{border-color:var(--accent);background:rgba(201,168,76,.08);}
+/* Progress */
+.prog-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:16px;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),#f0d78c);border-radius:3px;transition:width .3s;}
+/* Q Card */
+.q-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 18px;margin-bottom:12px;}
+.q-num{font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;}
+.q-text{font-size:15px;line-height:1.75;margin-bottom:14px;}
+.q-input{width:100%;padding:11px 14px;border-radius:8px;border:2px solid var(--border);background:#0d1117;color:var(--text);font-size:15px;outline:none;font-family:inherit;}
+.q-input:focus{border-color:var(--accent);}
+.ox-row{display:flex;gap:10px;margin-top:4px;}
+.ox-btn{flex:1;padding:16px;border-radius:10px;border:2px solid var(--border);background:transparent;font-size:22px;font-weight:800;cursor:pointer;transition:all .15s;}
+.ox-btn:hover{transform:scale(1.05);}
+/* Feedback */
+.fb{padding:12px 14px;border-radius:10px;margin-top:10px;font-size:13px;line-height:1.65;}
+.fb.ok{background:rgba(46,160,67,.12);border:1px solid var(--correct);}
+.fb.err{background:rgba(248,81,73,.12);border:1px solid var(--wrong);}
+.fb-ans{color:var(--accent);font-weight:700;}
+.fb-exp{color:var(--dim);margin-top:3px;font-size:12px;}
+/* Score */
+.score-box{text-align:center;padding:36px 20px;background:var(--card);border-radius:16px;border:2px solid var(--accent);margin-top:8px;}
+.score-big{font-size:54px;font-weight:900;color:var(--accent);line-height:1;}
+.score-pct{font-size:20px;color:var(--accent);font-weight:700;margin-top:6px;}
+.score-streak{font-size:13px;color:var(--dim);margin-top:8px;}
+/* Tree */
+.tree-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;}
+.tree-info{background:var(--card);border:1px solid var(--accent);border-radius:12px;padding:14px 16px;margin-bottom:12px;}
+.tree-prog-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.tree-prog-bar{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+.tree-prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),#f0d78c);border-radius:4px;transition:width .4s;}
+.tree-prog-txt{font-size:13px;color:var(--accent);font-weight:700;white-space:nowrap;}
+.tree-ctrl{display:flex;gap:6px;margin-top:8px;}
+.tree-ctrl-btn{flex:1;padding:7px 4px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;}
+.tn-hd{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;border-radius:8px;cursor:pointer;margin-bottom:2px;transition:background .12s;}
+.tn-hd:hover{filter:brightness(1.2);}
+.tn-icon{font-size:12px;flex-shrink:0;margin-top:2px;}
+.tn-label{font-size:14px;line-height:1.4;}
+.tn-hint{font-size:11px;color:var(--dim);margin-top:1px;}
+.tn-desc{font-size:13px;line-height:1.65;margin-top:5px;padding:6px 10px;border-radius:6px;border-left:3px solid;}
+.tn-children{padding-left:14px;border-left:2px solid;}
+.success-banner{background:rgba(46,160,67,.12);border:1px solid var(--correct);border-radius:8px;padding:8px 12px;text-align:center;font-size:13px;color:var(--correct);font-weight:700;margin-bottom:8px;}
+/* Stat row */
+.stat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.stat-left{font-size:12px;color:var(--dim);}
+.stat-right{font-size:13px;color:var(--accent);font-weight:700;}
+/* Footer */
+.footer{text-align:center;padding:20px 16px;font-size:11px;color:var(--dim);border-top:1px solid var(--border);margin-top:24px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
 const UNITS = [
   {
     id: 1,
@@ -724,527 +807,463 @@ const UNITS = [
   }
 ];
 
-
-const COLORS = {
-  bg: "#0d1117",
-  card: "#161b22",
-  accent: "#c9a84c",
-  accentDark: "#8b7432",
-  correct: "#2ea043",
-  wrong: "#f85149",
-  text: "#e6edf3",
-  textDim: "#8b949e",
-  border: "#30363d",
-  navy: "#1a1a3e",
+/* ── State ── */
+let ST = {
+  screen:'home', unitId:null, mode:null,
+  questions:[], qIdx:0, userAns:'', oxChoice:null,
+  showFeedback:false, score:0, answered:0, streak:0, maxStreak:0,
+  treeRevealed:new Set(), treeExpand:false
 };
 
-const styles = {
-  app: { minHeight:"100vh", background:`linear-gradient(135deg,${COLORS.bg} 0%,${COLORS.navy} 100%)`, color:COLORS.text, fontFamily:"'Pretendard','Noto Sans KR',sans-serif", padding:0 },
-  header: { background:`linear-gradient(90deg,${COLORS.navy},#0d1530)`, padding:"20px 24px", borderBottom:`2px solid ${COLORS.accent}`, textAlign:"center" },
-  logo: { fontSize:"13px", color:COLORS.accent, letterSpacing:"2px", fontWeight:700, marginBottom:4 },
-  title: { fontSize:"22px", fontWeight:800, background:`linear-gradient(90deg,${COLORS.accent},#f0d78c)`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", margin:0 },
-  subtitle: { fontSize:"12px", color:COLORS.textDim, marginTop:4 },
-  container: { maxWidth:680, margin:"0 auto", padding:"16px 16px 80px" },
-  unitCard: { background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:12, padding:"18px 20px", marginBottom:12, cursor:"pointer", transition:"all .2s" },
-  unitTitle: { fontSize:"16px", fontWeight:700, marginBottom:4 },
-  unitSub: { fontSize:"12px", color:COLORS.textDim },
-  modeBtn: { flex:1, padding:"14px 8px", borderRadius:10, border:`1px solid ${COLORS.border}`, background:COLORS.card, color:COLORS.text, fontSize:"14px", fontWeight:600, cursor:"pointer", textAlign:"center", transition:"all .2s" },
-  modeBtnActive: { background:COLORS.accent, color:"#000", borderColor:COLORS.accent },
-  backBtn: { background:"none", border:`1px solid ${COLORS.border}`, color:COLORS.textDim, borderRadius:8, padding:"8px 16px", fontSize:"13px", cursor:"pointer", marginBottom:16 },
-  progress: { height:6, background:COLORS.border, borderRadius:3, overflow:"hidden", marginBottom:20 },
-  progressFill: { height:"100%", background:`linear-gradient(90deg,${COLORS.accent},#f0d78c)`, borderRadius:3, transition:"width .3s" },
-  qCard: { background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:14, padding:"24px 20px", marginBottom:16 },
-  qNum: { fontSize:"12px", color:COLORS.accent, fontWeight:700, marginBottom:8 },
-  qText: { fontSize:"15px", lineHeight:1.7, marginBottom:16 },
-  input: { width:"100%", padding:"12px 16px", borderRadius:8, border:`2px solid ${COLORS.border}`, background:"#0d1117", color:COLORS.text, fontSize:"15px", outline:"none", boxSizing:"border-box" },
-  oxBtn: { flex:1, padding:"14px", borderRadius:10, border:`2px solid ${COLORS.border}`, background:"transparent", fontSize:"18px", fontWeight:800, cursor:"pointer", transition:"all .2s" },
-  submitBtn: { width:"100%", padding:"14px", borderRadius:10, border:"none", background:`linear-gradient(90deg,${COLORS.accent},#dbb850)`, color:"#000", fontSize:"15px", fontWeight:700, cursor:"pointer", marginTop:12 },
-  feedback: { padding:"14px 16px", borderRadius:10, marginTop:12, fontSize:"14px", lineHeight:1.6 },
-  scoreBox: { textAlign:"center", padding:"40px 20px", background:COLORS.card, borderRadius:16, border:`2px solid ${COLORS.accent}` },
-  scoreBig: { fontSize:"56px", fontWeight:800, color:COLORS.accent },
-  tree: { background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:12, padding:"20px", fontSize:"13px", lineHeight:1.9, whiteSpace:"pre-wrap", fontFamily:"'D2Coding','Courier New',monospace", color:COLORS.text, overflowX:"auto" },
-  badge: { display:"inline-block", padding:"3px 10px", borderRadius:20, fontSize:"11px", fontWeight:700, marginRight:8 },
-  footer: { textAlign:"center", padding:"24px 16px", fontSize:"11px", color:COLORS.textDim, borderTop:`1px solid ${COLORS.border}`, marginTop:32 }
-};
+/* ── Utils ── */
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function unit(){return UNITS.find(u=>u.id===ST.unitId);}
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
+function DEPTH_COLOR(d){return['#c9a84c','#58a6ff','#3fb950','#bc8cff','#ff7b72'][Math.min(d,4)];}
 
-function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
-
-
-// ── Interactive Tree ─────────────────────────────────────────────────────────
-const DEPTH_COLORS = ["#c9a84c","#58a6ff","#3fb950","#bc8cff","#ff7b72"];
-
-function countLeaves(nodes) {
-  if (!nodes) return 0;
-  return nodes.reduce((acc, n) => {
-    if (!n.c || n.c.length === 0) return acc + 1;
-    return acc + countLeaves(n.c);
-  }, 0);
+/* ── Header ── */
+function mkHeader(){
+  const h=el('div','hd');
+  h.innerHTML=`<div class="hd-logo">이든관리형학습센터 &amp; 미사이든학원</div>
+  <div class="hd-title">윤리와 사상 기말대비 퀴즈</div>
+  <div class="hd-sub">하남고 2학년 · III. 서양 윤리사상</div>`;
+  return h;
 }
 
-function TreeNode({ node, depth, revealed, onReveal }) {
-  const [open, setOpen] = useState(depth < 1);
-  const hasChildren = node.c && node.c.length > 0;
-  const isLeaf = !hasChildren;
-  const isRevealed = revealed.has(node.l);
-  const color = DEPTH_COLORS[Math.min(depth, DEPTH_COLORS.length - 1)];
+/* ── RENDER ── */
+function render(){
+  const app=document.getElementById('app');
+  app.innerHTML='';
+  const screens={home:renderHome,select:renderSelect,tree:renderTree,quiz:renderQuiz,result:renderResult};
+  (screens[ST.screen]||renderHome)(app);
+  window.scrollTo(0,0);
+}
 
-  const handleClick = () => {
-    if (isLeaf && !isRevealed) onReveal(node.l);
-    if (hasChildren) setOpen(o => !o);
+/* ── HOME ── */
+function renderHome(app){
+  app.appendChild(mkHeader());
+  const body=el('div','body');
+  body.appendChild(el('p',null,'<p style="font-size:13px;color:var(--dim);text-align:center;margin:12px 0 18px">단원을 선택하세요</p>'));
+  UNITS.forEach(u=>{
+    const card=el('div','unit-card');
+    card.innerHTML=`<div class="unit-title">${u.title}</div>
+    <div class="unit-sub">${u.sub}</div>
+    <div class="badges">
+      <span class="badge" style="background:rgba(201,168,76,.15);color:var(--accent)">🌳 트리</span>
+      <span class="badge" style="background:rgba(46,160,67,.15);color:var(--correct)">✏️ 괄호 ${u.fill.length}제</span>
+      <span class="badge" style="background:rgba(248,81,73,.15);color:var(--wrong)">⭕ OX ${u.ox.length}제</span>
+    </div>`;
+    card.onclick=()=>{ST.unitId=u.id;ST.screen='select';render();};
+    body.appendChild(card);
+  });
+  const footer=el('div','footer');
+  footer.innerHTML='© 2026 이든관리형학습센터 &amp; 미사이든학원<br>미사강변대로 80 그린프라자 7층 | 010-8442-2817';
+  body.appendChild(footer);
+  app.appendChild(body);
+}
+
+/* ── SELECT ── */
+function renderSelect(app){
+  app.appendChild(mkHeader());
+  const body=el('div','body');
+  const u=unit();
+  const back=el('button','btn-ghost','← 단원 선택');
+  back.onclick=()=>{ST.screen='home';render();};
+  body.appendChild(back);
+  const card=el('div','q-card');
+  card.style.borderColor='var(--accent)';
+  card.innerHTML=`<div style="font-size:16px;font-weight:700;margin-bottom:3px">${u.title}</div>
+  <div style="font-size:12px;color:var(--dim);margin-bottom:14px">${u.sub}</div>
+  <p style="font-size:13px;margin-bottom:12px">학습 모드를 선택하세요</p>`;
+  const modeGrid=el('div','mode-grid');
+  const modes=[
+    {m:'tree',icon:'🌳',label:'트리 구조',sub:'개념 탐험'},
+    {m:'fill',icon:'✏️',label:'괄호 문제',sub:u.fill.length+'문항'},
+    {m:'ox',icon:'⭕',label:'OX 퀴즈',sub:u.ox.length+'문항'},
+  ];
+  modes.forEach(({m,icon,label,sub})=>{
+    const btn=el('button','mode-btn',`${icon}<br><b>${label}</b><br><span style="font-size:11px;color:var(--dim)">${sub}</span>`);
+    btn.onclick=()=>startQuiz(u,m);
+    modeGrid.appendChild(btn);
+  });
+  card.appendChild(modeGrid);
+  body.appendChild(card);
+  app.appendChild(body);
+}
+
+/* ── START QUIZ ── */
+function startQuiz(u,m){
+  ST.unitId=u.id; ST.mode=m;
+  if(m==='tree'){ST.screen='tree';ST.treeRevealed=new Set();ST.treeExpand=false;render();return;}
+  ST.questions=shuffle(m==='fill'?u.fill:u.ox);
+  ST.qIdx=0;ST.score=0;ST.answered=0;ST.streak=0;ST.maxStreak=0;
+  ST.userAns='';ST.oxChoice=null;ST.showFeedback=false;
+  ST.screen='quiz';render();
+}
+
+/* ── TREE ── */
+function countLeaves(nodes){
+  if(!nodes)return 0;
+  return nodes.reduce((acc,n)=>(!n.c||!n.c.length)?acc+1:acc+countLeaves(n.c),0);
+}
+
+function buildTreeNode(node,depth){
+  const color=DEPTH_COLOR(depth);
+  const hasC=node.c&&node.c.length>0;
+  const isLeaf=!hasC;
+  const id='tn_'+encodeURIComponent(node.l);
+  const isRev=ST.treeRevealed.has(node.l);
+
+  const wrap=el('div');
+  wrap.id=id;
+  if(depth>0){
+    wrap.style.paddingLeft='14px';
+    wrap.style.borderLeft=`2px solid ${color}22`;
+  }
+
+  const hd=el('div','tn-hd');
+  hd.style.borderRadius='8px';
+
+  const icon=el('span','tn-icon');
+  icon.style.color=color;
+  icon.textContent=hasC?(ST.treeExpand||depth<1?'▼':'▶'):(isRev?'✦':'🔒');
+
+  const txtWrap=el('div');
+  txtWrap.style.flex='1';
+
+  const label=el('span','tn-label');
+  label.style.color=hasC?color:(isRev?'var(--text)':'var(--dim)');
+  label.style.fontWeight=depth<2?'700':'400';
+  label.style.fontSize=depth===0?'15px':'14px';
+  label.textContent=node.l;
+
+  txtWrap.appendChild(label);
+
+  if(!isLeaf&&node.d&&depth>0){
+    const hint=el('div','tn-hint');
+    hint.textContent=node.d;
+    txtWrap.appendChild(hint);
+  }
+
+  let descEl=null;
+  if(isLeaf){
+    descEl=el('div','tn-desc');
+    descEl.style.color='#adbac7';
+    descEl.style.borderLeftColor=color;
+    descEl.style.background=`${color}12`;
+    descEl.textContent=node.d||'';
+    descEl.style.display=isRev?'block':'none';
+    const hint2=el('div','tn-hint');
+    hint2.textContent='탭하여 개념 확인 🔒';
+    hint2.style.display=isRev?'none':'block';
+    txtWrap.appendChild(hint2);
+    txtWrap.appendChild(descEl);
+  }
+
+  hd.appendChild(icon);
+  hd.appendChild(txtWrap);
+
+  let childrenEl=null;
+  if(hasC){
+    childrenEl=el('div','tn-children');
+    childrenEl.style.borderLeftColor=`${color}22`;
+    childrenEl.style.display=(ST.treeExpand||depth<1)?'block':'none';
+    node.c.forEach(child=>{childrenEl.appendChild(buildTreeNode(child,depth+1));});
+  }
+
+  hd.addEventListener('click',()=>{
+    if(isLeaf&&!isRev){
+      ST.treeRevealed.add(node.l);
+      icon.textContent='✦';
+      label.style.color='var(--text)';
+      txtWrap.querySelector('.tn-hint').style.display='none';
+      descEl.style.display='block';
+      // update counter
+      updateTreeProgress();
+    }
+    if(hasC&&childrenEl){
+      const open=childrenEl.style.display!=='none';
+      childrenEl.style.display=open?'none':'block';
+      icon.textContent=open?'▶':'▼';
+    }
+  });
+
+  wrap.appendChild(hd);
+  if(childrenEl)wrap.appendChild(childrenEl);
+  return wrap;
+}
+
+function updateTreeProgress(){
+  const u=unit();
+  const total=countLeaves(u.treeData);
+  const rev=ST.treeRevealed.size;
+  const pct=Math.round(rev/total*100);
+  const fill=document.getElementById('tree-prog-fill');
+  const txt=document.getElementById('tree-prog-txt');
+  const banner=document.getElementById('tree-banner');
+  if(fill)fill.style.width=pct+'%';
+  if(txt)txt.textContent=`${rev} / ${total} 🔓`;
+  if(banner){
+    if(pct>=100){banner.style.display='block';}
+  }
+}
+
+function renderTree(app){
+  app.appendChild(mkHeader());
+  const body=el('div','body');
+  const u=unit();
+  const total=countLeaves(u.treeData);
+
+  const back=el('button','btn-ghost','← 모드 선택');
+  back.onclick=()=>{ST.screen='select';render();};
+  body.appendChild(back);
+
+  // Info card
+  const info=el('div','tree-info');
+  info.innerHTML=`<div style="font-size:15px;font-weight:700;margin-bottom:2px">${u.title}</div>
+  <div style="font-size:12px;color:var(--dim);margin-bottom:10px">${u.sub}</div>`;
+
+  // Progress
+  const progRow=el('div','tree-prog-row');
+  const progBar=el('div','tree-prog-bar');
+  const progFill=el('div','tree-prog-fill');
+  progFill.id='tree-prog-fill';
+  progFill.style.width=Math.round(ST.treeRevealed.size/total*100)+'%';
+  progBar.appendChild(progFill);
+  const progTxt=el('span','tree-prog-txt');
+  progTxt.id='tree-prog-txt';
+  progTxt.textContent=`${ST.treeRevealed.size} / ${total} 🔓`;
+  progRow.appendChild(progBar);
+  progRow.appendChild(progTxt);
+  info.appendChild(progRow);
+
+  // Success banner
+  const banner=el('div','success-banner');
+  banner.id='tree-banner';
+  banner.textContent='🎉 모든 개념 탐험 완료! 이제 퀴즈로 실력을 확인하세요!';
+  banner.style.display=ST.treeRevealed.size>=total?'block':'none';
+  info.appendChild(banner);
+
+  // Control buttons
+  const ctrl=el('div','tree-ctrl');
+  const btnOpen=el('button','tree-ctrl-btn','▼ 전체 펼치기');
+  btnOpen.style.cssText='background:rgba(88,166,255,.1);border-color:#58a6ff44;color:#58a6ff;';
+  btnOpen.onclick=()=>{ST.treeExpand=true;render();};
+  const btnClose=el('button','tree-ctrl-btn','▶ 전체 접기');
+  btnClose.style.cssText='background:rgba(139,148,158,.1);border-color:var(--border);color:var(--dim);';
+  btnClose.onclick=()=>{ST.treeExpand=false;render();};
+  const btnReset=el('button','tree-ctrl-btn','🔒 초기화');
+  btnReset.style.cssText='background:rgba(248,81,73,.1);border-color:#f8514944;color:var(--wrong);';
+  btnReset.onclick=()=>{ST.treeRevealed=new Set();render();};
+  ctrl.appendChild(btnOpen);ctrl.appendChild(btnClose);ctrl.appendChild(btnReset);
+  info.appendChild(ctrl);
+  body.appendChild(info);
+
+  // Tree content
+  const treeWrap=el('div','tree-wrap');
+  u.treeData.forEach(node=>treeWrap.appendChild(buildTreeNode(node,0)));
+  body.appendChild(treeWrap);
+
+  // Quiz buttons
+  const row=el('div','btn-row');
+  const bFill=el('button','btn btn-gold','✏️ 괄호 문제 풀기');
+  bFill.style.flex='1';bFill.onclick=()=>startQuiz(u,'fill');
+  const bOX=el('button','btn btn-green','⭕ OX 퀴즈 풀기');
+  bOX.style.flex='1';bOX.onclick=()=>startQuiz(u,'ox');
+  row.appendChild(bFill);row.appendChild(bOX);
+  body.appendChild(row);
+  app.appendChild(body);
+}
+
+/* ── QUIZ ── */
+function checkFill(){
+  if(ST.showFeedback)return;
+  const q=ST.questions[ST.qIdx];
+  const ans=Array.isArray(q[1])?q[1]:[q[1]];
+  const ut=ST.userAns.trim().replace(/\s+/g,'');
+  let ok=false;
+  if(ans.length===1){
+    ok=ans.some(a=>a.split('/').some(v=>ut===v.replace(/\s+/g,'')||ut.includes(v.replace(/\s+/g,''))));
+  } else {
+    const parts=ST.userAns.split(/[,，、\s]+/).map(s=>s.trim()).filter(Boolean);
+    ok=ans.every(a=>a.split('/').some(v=>parts.some(p=>p.replace(/\s+/g,'')===v.replace(/\s+/g,'')||p.includes(v))));
+  }
+  if(ok){ST.score++;ST.streak++;if(ST.streak>ST.maxStreak)ST.maxStreak=ST.streak;}
+  else ST.streak=0;
+  ST.answered++;ST.showFeedback=true;
+  renderFeedback(ok,Array.isArray(q[1])?q[1].join(', '):q[1],null);
+}
+
+function checkOX(choice){
+  if(ST.showFeedback)return;
+  ST.oxChoice=choice;
+  const q=ST.questions[ST.qIdx];
+  const ok=choice===q[1];
+  if(ok){ST.score++;ST.streak++;if(ST.streak>ST.maxStreak)ST.maxStreak=ST.streak;}
+  else ST.streak=0;
+  ST.answered++;ST.showFeedback=true;
+  renderFeedback(ok,q[1]?'⭕':'❌',q[2]);
+  // Update OX button styles
+  document.querySelectorAll('.ox-btn').forEach(b=>{
+    const isO=b.dataset.val==='true';
+    b.style.borderColor=ok?(isO===q[1]?'var(--correct)':'var(--border)'):(isO===choice?'var(--wrong)':'var(--border)');
+  });
+}
+
+function renderFeedback(ok,ans,exp){
+  const existing=document.getElementById('fb-block');
+  if(existing)existing.remove();
+  const existing2=document.getElementById('next-btn');
+  if(existing2)existing2.remove();
+
+  const fb=el('div','fb '+(ok?'ok':'err'));
+  fb.id='fb-block';
+  fb.innerHTML=`<b>${ok?'✅ 정답!':'❌ 오답'}</b><br>정답: <span class="fb-ans">${ans}</span>`;
+  if(exp){const d=el('div','fb-exp');d.textContent=exp;fb.appendChild(d);}
+
+  const total=ST.questions.length;
+  const nextBtn=el('button','btn btn-gold');
+  nextBtn.id='next-btn';
+  nextBtn.style.cssText='width:100%;margin-top:10px;';
+  nextBtn.textContent=ST.qIdx+1>=total?'🏁 결과 보기':'다음 문제 →';
+  nextBtn.onclick=()=>{
+    if(ST.qIdx+1>=total){ST.screen='result';render();}
+    else{ST.qIdx++;ST.userAns='';ST.oxChoice=null;ST.showFeedback=false;render();}
   };
 
-  return (
-    <div style={{ marginLeft: depth === 0 ? 0 : 14, borderLeft: depth > 0 ? `2px solid ${color}22` : "none", paddingLeft: depth > 0 ? 10 : 0 }}>
-      <div
-        onClick={handleClick}
-        style={{
-          display: "flex", alignItems: "flex-start", gap: 8,
-          padding: "7px 10px", borderRadius: 8, cursor: "pointer",
-          marginBottom: 3,
-          background: isLeaf && !isRevealed ? "rgba(255,255,255,0.03)" : "transparent",
-          border: isLeaf && !isRevealed ? "1px dashed #30363d" : "1px solid transparent",
-          transition: "all .15s",
-        }}
-        onMouseEnter={e => e.currentTarget.style.background = `${color}18`}
-        onMouseLeave={e => e.currentTarget.style.background = isLeaf && !isRevealed ? "rgba(255,255,255,0.03)" : "transparent"}
-      >
-        <span style={{ color, fontSize: 13, marginTop: 1, flexShrink: 0 }}>
-          {hasChildren ? (open ? "▼" : "▶") : (isRevealed ? "✦" : "🔒")}
-        </span>
-        <div style={{ flex: 1 }}>
-          <span style={{ color: hasChildren ? color : (isRevealed ? "#e6edf3" : "#8b949e"), fontSize: depth === 0 ? 15 : 14, fontWeight: depth < 2 ? 700 : 400 }}>
-            {node.l}
-          </span>
-          {node.d && depth > 0 && !isLeaf && (
-            <div style={{ fontSize: 11, color: "#8b949e", marginTop: 1 }}>{node.d}</div>
-          )}
-          {isLeaf && isRevealed && node.d && (
-            <div style={{ fontSize: 13, color: "#adbac7", marginTop: 4, lineHeight: 1.6, padding: "6px 10px", background: `${color}12`, borderRadius: 6, borderLeft: `3px solid ${color}` }}>
-              {node.d}
-            </div>
-          )}
-          {isLeaf && !isRevealed && (
-            <div style={{ fontSize: 11, color: "#8b949e", marginTop: 2 }}>탭하여 개념 확인</div>
-          )}
-        </div>
-      </div>
-      {hasChildren && open && (
-        <div>
-          {node.c.map((child, i) => (
-            <TreeNode key={i} node={child} depth={depth + 1} revealed={revealed} onReveal={onReveal} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  const card=document.querySelector('.q-card');
+  if(card){card.appendChild(fb);card.appendChild(nextBtn);}
 }
 
-function TreeScreen({ unit, onBack, onStartQuiz }) {
-  const [revealed, setRevealed] = useState(new Set());
-  const [expandAll, setExpandAll] = useState(false);
-  const totalLeaves = useMemo(() => countLeaves(unit.treeData), [unit]);
-  const pct = totalLeaves > 0 ? Math.round((revealed.size / totalLeaves) * 100) : 0;
+function renderQuiz(app){
+  app.appendChild(mkHeader());
+  const body=el('div','body');
+  const u=unit();
+  const q=ST.questions[ST.qIdx];
+  const total=ST.questions.length;
+  const isFill=ST.mode==='fill';
 
-  const handleReveal = (key) => setRevealed(prev => new Set([...prev, key]));
+  const back=el('button','btn-ghost','← 그만두기');
+  back.onclick=()=>{ST.screen='select';render();};
+  body.appendChild(back);
 
-  const expandKey = expandAll ? "expanded" : "collapsed";
+  const statRow=el('div','stat-row');
+  statRow.innerHTML=`<span class="stat-left">${isFill?'✏️ 괄호 문제':'⭕ OX 퀴즈'} · ${u.title.split('.')[0]}</span>
+  <span class="stat-right">${ST.streak>0?'🔥'+ST.streak+' ':''} ${ST.score}/${ST.answered}</span>`;
+  body.appendChild(statRow);
 
-  return (
-    <div style={{ minHeight:"100vh", background:`linear-gradient(135deg,#0d1117 0%,#1a1a3e 100%)`, color:"#e6edf3", fontFamily:"'Pretendard','Noto Sans KR',sans-serif" }}>
-      <div style={{ background:"linear-gradient(90deg,#1a1a3e,#0d1530)", padding:"16px 20px", borderBottom:"2px solid #c9a84c", textAlign:"center" }}>
-        <div style={{ fontSize:"11px", color:"#c9a84c", letterSpacing:"2px", fontWeight:700 }}>이든관리형학습센터 & 미사이든학원</div>
-        <div style={{ fontSize:"18px", fontWeight:800, background:"linear-gradient(90deg,#c9a84c,#f0d78c)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>🌳 개념 탐험 트리</div>
-      </div>
+  const prog=el('div','prog-bar');
+  const fill=el('div','prog-fill');
+  fill.style.width=Math.round((ST.qIdx+1)/total*100)+'%';
+  prog.appendChild(fill);body.appendChild(prog);
 
-      <div style={{ maxWidth:680, margin:"0 auto", padding:"14px 14px 80px" }}>
-        <button onClick={onBack} style={{ background:"none", border:"1px solid #30363d", color:"#8b949e", borderRadius:8, padding:"7px 14px", fontSize:13, cursor:"pointer", marginBottom:12 }}>← 모드 선택</button>
+  const card=el('div','q-card');
+  const qnum=el('div','q-num',`Q${ST.qIdx+1} / ${total}`);
+  card.appendChild(qnum);
 
-        <div style={{ background:"#161b22", border:"1px solid #c9a84c", borderRadius:12, padding:"14px 16px", marginBottom:14 }}>
-          <div style={{ fontSize:"15px", fontWeight:700, marginBottom:2 }}>{unit.title}</div>
-          <div style={{ fontSize:"12px", color:"#8b949e", marginBottom:10 }}>{unit.sub}</div>
+  const qtxt=el('div','q-text');
+  qtxt.textContent=isFill?q[0].replace(/\(\s*\)/g,'(　　　)'):q[0];
+  card.appendChild(qtxt);
 
-          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:6 }}>
-            <div style={{ flex:1, height:8, background:"#30363d", borderRadius:4, overflow:"hidden" }}>
-              <div style={{ height:"100%", background:"linear-gradient(90deg,#c9a84c,#f0d78c)", width:`${pct}%`, borderRadius:4, transition:"width .4s" }} />
-            </div>
-            <span style={{ fontSize:"13px", color:"#c9a84c", fontWeight:700, whiteSpace:"nowrap" }}>{revealed.size} / {totalLeaves} 🔓</span>
-          </div>
-
-          {pct === 100 && (
-            <div style={{ fontSize:"13px", color:"#2ea043", fontWeight:700, textAlign:"center", padding:"6px", background:"rgba(46,160,67,0.1)", borderRadius:8, marginBottom:6 }}>
-              🎉 모든 개념 탐험 완료! 이제 퀴즈로 실력을 확인해보세요!
-            </div>
-          )}
-
-          <div style={{ display:"flex", gap:6 }}>
-            <button onClick={() => setExpandAll(true)} style={{ flex:1, padding:"7px", background:"rgba(88,166,255,0.1)", border:"1px solid #58a6ff44", borderRadius:8, color:"#58a6ff", fontSize:12, cursor:"pointer", fontWeight:600 }}>▼ 전체 펼치기</button>
-            <button onClick={() => setExpandAll(false)} style={{ flex:1, padding:"7px", background:"rgba(139,148,158,0.1)", border:"1px solid #30363d", borderRadius:8, color:"#8b949e", fontSize:12, cursor:"pointer" }}>▶ 전체 접기</button>
-            <button onClick={() => setRevealed(new Set())} style={{ flex:1, padding:"7px", background:"rgba(248,81,73,0.1)", border:"1px solid #f8514944", borderRadius:8, color:"#f85149", fontSize:12, cursor:"pointer" }}>🔒 초기화</button>
-          </div>
-        </div>
-
-        <div style={{ background:"#161b22", border:"1px solid #30363d", borderRadius:12, padding:"16px" }}>
-          <TreeContent key={expandKey} treeData={unit.treeData} revealed={revealed} onReveal={handleReveal} forceOpen={expandAll} />
-        </div>
-
-        <div style={{ display:"flex", gap:8, marginTop:14 }}>
-          <button style={{ flex:1, padding:"13px", borderRadius:10, border:"none", background:"linear-gradient(90deg,#c9a84c,#dbb850)", color:"#000", fontSize:14, fontWeight:700, cursor:"pointer" }} onClick={() => onStartQuiz(unit, "fill")}>✏️ 괄호 문제 풀기</button>
-          <button style={{ flex:1, padding:"13px", borderRadius:10, border:"none", background:"linear-gradient(90deg,#2ea043,#3fb950)", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" }} onClick={() => onStartQuiz(unit, "ox")}>⭕ OX 퀴즈 풀기</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TreeContent({ treeData, revealed, onReveal, forceOpen }) {
-  return (
-    <div>
-      {treeData.map((node, i) => (
-        <TreeContentNode key={i} node={node} depth={0} revealed={revealed} onReveal={onReveal} forceOpen={forceOpen} />
-      ))}
-    </div>
-  );
-}
-
-function TreeContentNode({ node, depth, revealed, onReveal, forceOpen }) {
-  const [open, setOpen] = useState(depth < 1 || forceOpen);
-  const hasChildren = node.c && node.c.length > 0;
-  const isLeaf = !hasChildren;
-  const isRevealed = revealed.has(node.l);
-  const color = DEPTH_COLORS[Math.min(depth, DEPTH_COLORS.length - 1)];
-
-  useEffect(() => {
-    if (forceOpen !== undefined) setOpen(forceOpen || depth < 1);
-  }, [forceOpen]);
-
-  const handleClick = () => {
-    if (isLeaf && !isRevealed) onReveal(node.l);
-    if (hasChildren) setOpen(o => !o);
-  };
-
-  return (
-    <div style={{ marginLeft: depth === 0 ? 0 : 14, borderLeft: depth > 0 ? `2px solid ${color}22` : "none", paddingLeft: depth > 0 ? 10 : 0 }}>
-      <div
-        onClick={handleClick}
-        style={{ display:"flex", alignItems:"flex-start", gap:8, padding:"7px 10px", borderRadius:8, cursor:"pointer", marginBottom:3,
-          background: isLeaf && !isRevealed ? "rgba(255,255,255,0.03)" : "transparent",
-          border: isLeaf && !isRevealed ? "1px dashed #30363d" : "1px solid transparent" }}
-        onMouseEnter={e => e.currentTarget.style.background = `${color}18`}
-        onMouseLeave={e => e.currentTarget.style.background = isLeaf && !isRevealed ? "rgba(255,255,255,0.03)" : "transparent"}
-      >
-        <span style={{ color, fontSize:13, marginTop:1, flexShrink:0 }}>
-          {hasChildren ? (open ? "▼" : "▶") : (isRevealed ? "✦" : "🔒")}
-        </span>
-        <div style={{ flex:1 }}>
-          <span style={{ color: hasChildren ? color : (isRevealed ? "#e6edf3" : "#8b949e"), fontSize: depth === 0 ? 15 : 14, fontWeight: depth < 2 ? 700 : 400 }}>
-            {node.l}
-          </span>
-          {node.d && !isLeaf && depth > 0 && (
-            <div style={{ fontSize:11, color:"#8b949e", marginTop:1 }}>{node.d}</div>
-          )}
-          {isLeaf && isRevealed && node.d && (
-            <div style={{ fontSize:13, color:"#adbac7", marginTop:4, lineHeight:1.6, padding:"6px 10px", background:`${color}12`, borderRadius:6, borderLeft:`3px solid ${color}` }}>
-              {node.d}
-            </div>
-          )}
-          {isLeaf && !isRevealed && (
-            <div style={{ fontSize:11, color:"#8b949e", marginTop:1 }}>탭하여 개념 확인 🔒</div>
-          )}
-        </div>
-      </div>
-      {hasChildren && open && node.c.map((child, i) => (
-        <TreeContentNode key={i} node={child} depth={depth+1} revealed={revealed} onReveal={onReveal} forceOpen={forceOpen} />
-      ))}
-    </div>
-  );
-}
-
-export default function App() {
-  const [screen, setScreen] = useState("home");
-  const [unitId, setUnitId] = useState(null);
-  const [mode, setMode] = useState(null);
-  const [qIdx, setQIdx] = useState(0);
-  const [userAns, setUserAns] = useState("");
-  const [oxChoice, setOxChoice] = useState(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [score, setScore] = useState(0);
-  const [answered, setAnswered] = useState(0);
-  const [questions, setQuestions] = useState([]);
-  const [streak, setStreak] = useState(0);
-  const [maxStreak, setMaxStreak] = useState(0);
-
-  const unit = UNITS.find(u => u.id === unitId);
-
-  const startQuiz = useCallback((u, m) => {
-    setUnitId(u.id);
-    setMode(m);
-    if (m === "tree") {
-      setScreen("tree");
-    } else {
-      const data = m === "fill" ? u.fill : u.ox;
-      setQuestions(shuffle(data));
-      setQIdx(0); setScore(0); setAnswered(0); setStreak(0); setMaxStreak(0);
-      setUserAns(""); setOxChoice(null); setShowFeedback(false);
-      setScreen("quiz");
-    }
-  }, []);
-
-  const checkFill = useCallback(() => {
-    if (showFeedback) return;
-    const q = questions[qIdx];
-    const ans = Array.isArray(q[1]) ? q[1] : [q[1]];
-    const userTrimmed = userAns.trim().replace(/\s+/g,"");
-    let correct = false;
-    if (ans.length === 1) {
-      correct = ans.some(a => {
-        const variants = a.split("/").map(v=>v.trim());
-        return variants.some(v => userTrimmed === v.replace(/\s+/g,"") || userTrimmed.includes(v.replace(/\s+/g,"")));
-      });
-    } else {
-      const parts = userAns.split(/[,，、\s]+/).map(s=>s.trim()).filter(Boolean);
-      correct = ans.every(a => {
-        const variants = a.split("/").map(v=>v.trim());
-        return parts.some(p => variants.some(v => p.replace(/\s+/g,"") === v.replace(/\s+/g,"") || p.includes(v)));
-      });
-    }
-    if (correct) { setScore(s=>s+1); setStreak(s=>{const n=s+1;setMaxStreak(m=>Math.max(m,n));return n;}); }
-    else { setStreak(0); }
-    setAnswered(a=>a+1);
-    setShowFeedback(true);
-  }, [questions, qIdx, userAns, showFeedback]);
-
-  const checkOX = useCallback((choice) => {
-    if (showFeedback) return;
-    setOxChoice(choice);
-    const q = questions[qIdx];
-    const correct = choice === q[1];
-    if (correct) { setScore(s=>s+1); setStreak(s=>{const n=s+1;setMaxStreak(m=>Math.max(m,n));return n;}); }
-    else { setStreak(0); }
-    setAnswered(a=>a+1);
-    setShowFeedback(true);
-  }, [questions, qIdx, showFeedback]);
-
-  const next = useCallback(() => {
-    if (qIdx + 1 >= questions.length) {
-      setScreen("result");
-    } else {
-      setQIdx(i=>i+1);
-      setUserAns(""); setOxChoice(null); setShowFeedback(false);
-    }
-  }, [qIdx, questions.length]);
-
-  const goHome = useCallback(() => {
-    setScreen("home"); setUnitId(null); setMode(null);
-  }, []);
-
-  const renderHeader = () => (
-    <div style={styles.header}>
-      <div style={styles.logo}>이든관리형학습센터 & 미사이든학원</div>
-      <h1 style={styles.title}>윤리와 사상 기말대비 퀴즈</h1>
-      <div style={styles.subtitle}>하남고 2학년 · III. 서양 윤리사상</div>
-    </div>
-  );
-
-  if (screen === "home") {
-    return (
-      <div style={styles.app}>
-        {renderHeader()}
-        <div style={styles.container}>
-          <p style={{fontSize:"14px",color:COLORS.textDim,textAlign:"center",margin:"16px 0 24px"}}>단원을 선택하세요</p>
-          {UNITS.map(u => (
-            <div key={u.id} style={styles.unitCard}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor=COLORS.accent;e.currentTarget.style.transform="translateY(-2px)";}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=COLORS.border;e.currentTarget.style.transform="none";}}
-              onClick={()=>{setUnitId(u.id);setScreen("select");}}
-            >
-              <div style={styles.unitTitle}>{u.title}</div>
-              <div style={styles.unitSub}>{u.sub}</div>
-              <div style={{marginTop:8,display:"flex",gap:6}}>
-                <span style={{...styles.badge,background:"rgba(201,168,76,0.15)",color:COLORS.accent}}>🌳 트리</span>
-                <span style={{...styles.badge,background:"rgba(46,160,67,0.15)",color:COLORS.correct}}>✏️ 괄호 {u.fill.length}제</span>
-                <span style={{...styles.badge,background:"rgba(248,81,73,0.15)",color:COLORS.wrong}}>⭕ OX {u.ox.length}제</span>
-              </div>
-            </div>
-          ))}
-          <div style={styles.footer}>
-            © 2026 이든관리형학습센터 & 미사이든학원<br/>
-            미사강변대로 80 그린프라자 7층 | 010-8442-2817
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (screen === "select") {
-    const u = UNITS.find(x=>x.id===unitId);
-    return (
-      <div style={styles.app}>
-        {renderHeader()}
-        <div style={styles.container}>
-          <button style={styles.backBtn} onClick={goHome}>← 단원 선택</button>
-          <div style={{...styles.qCard,borderColor:COLORS.accent}}>
-            <div style={{fontSize:"17px",fontWeight:700,marginBottom:4}}>{u.title}</div>
-            <div style={{fontSize:"13px",color:COLORS.textDim,marginBottom:16}}>{u.sub}</div>
-            <p style={{fontSize:"14px",marginBottom:16}}>학습 모드를 선택하세요</p>
-            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-              <button style={styles.modeBtn} onClick={()=>startQuiz(u,"tree")}
-                onMouseEnter={e=>e.currentTarget.style.borderColor=COLORS.accent}
-                onMouseLeave={e=>e.currentTarget.style.borderColor=COLORS.border}>
-                🌳<br/>트리 구조<br/><span style={{fontSize:"11px",color:COLORS.textDim}}>개념 정리</span>
-              </button>
-              <button style={styles.modeBtn} onClick={()=>startQuiz(u,"fill")}
-                onMouseEnter={e=>e.currentTarget.style.borderColor=COLORS.correct}
-                onMouseLeave={e=>e.currentTarget.style.borderColor=COLORS.border}>
-                ✏️<br/>괄호 문제<br/><span style={{fontSize:"11px",color:COLORS.textDim}}>{u.fill.length}문항</span>
-              </button>
-              <button style={styles.modeBtn} onClick={()=>startQuiz(u,"ox")}
-                onMouseEnter={e=>e.currentTarget.style.borderColor=COLORS.wrong}
-                onMouseLeave={e=>e.currentTarget.style.borderColor=COLORS.border}>
-                ⭕<br/>OX 퀴즈<br/><span style={{fontSize:"11px",color:COLORS.textDim}}>{u.ox.length}문항</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (screen === "tree") {
-    return <TreeScreen unit={unit} onBack={()=>setScreen("select")} onStartQuiz={startQuiz} />;
-  }
-
-  if (screen === "result") {
-    const total = questions.length;
-    const pct = Math.round((score/total)*100);
-    const grade = pct >= 90 ? "🏆 완벽!" : pct >= 70 ? "👏 우수!" : pct >= 50 ? "💪 노력!" : "📖 복습!";
-    return (
-      <div style={styles.app}>
-        {renderHeader()}
-        <div style={styles.container}>
-          <div style={styles.scoreBox}>
-            <div style={{fontSize:"48px",marginBottom:8}}>{grade}</div>
-            <div style={styles.scoreBig}>{score}<span style={{fontSize:"24px",color:COLORS.textDim}}>/{total}</span></div>
-            <div style={{fontSize:"20px",color:COLORS.accent,fontWeight:700,marginTop:8}}>{pct}점</div>
-            <div style={{fontSize:"13px",color:COLORS.textDim,marginTop:12}}>최대 연속 정답: {maxStreak}개 🔥</div>
-            <div style={{display:"flex",gap:8,marginTop:24,justifyContent:"center",flexWrap:"wrap"}}>
-              <button style={{...styles.submitBtn,width:"auto",padding:"12px 24px"}} onClick={()=>startQuiz(unit, mode)}>🔄 다시 풀기</button>
-              <button style={{...styles.backBtn,marginBottom:0,color:COLORS.text}} onClick={()=>setScreen("select")}>📚 다른 모드</button>
-              <button style={{...styles.backBtn,marginBottom:0,color:COLORS.text}} onClick={goHome}>🏠 단원 선택</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (screen === "quiz") {
-    const q = questions[qIdx];
-    const total = questions.length;
-    const isFill = mode === "fill";
-
-    const getFillCorrect = () => {
-      const ans = Array.isArray(q[1]) ? q[1] : [q[1]];
-      return ans.join(", ");
-    };
-
-    const isCorrectFill = () => {
-      const ans = Array.isArray(q[1]) ? q[1] : [q[1]];
-      const ut = userAns.trim().replace(/\s+/g,"");
-      if (ans.length===1) {
-        return ans.some(a=>a.split("/").some(v=>ut===v.replace(/\s+/g,"")||ut.includes(v.replace(/\s+/g,""))));
+  if(isFill){
+    const inp=el('input','q-input');
+    inp.type='text';
+    inp.placeholder=Array.isArray(q[1])&&q[1].length>1?'쉼표(,)로 구분하여 입력':'정답을 입력하세요';
+    inp.value=ST.userAns;
+    inp.oninput=e=>ST.userAns=e.target.value;
+    inp.onkeydown=e=>{
+      if(e.key==='Enter'){
+        if(ST.showFeedback){
+          if(ST.qIdx+1>=total){ST.screen='result';render();}
+          else{ST.qIdx++;ST.userAns='';ST.showFeedback=false;render();}
+        }else checkFill();
       }
-      const parts = userAns.split(/[,，、\s]+/).map(s=>s.trim()).filter(Boolean);
-      return ans.every(a=>a.split("/").some(v=>parts.some(p=>p.replace(/\s+/g,"")===v.replace(/\s+/g,"")||p.includes(v))));
     };
-
-    return (
-      <div style={styles.app}>
-        {renderHeader()}
-        <div style={styles.container}>
-          <button style={styles.backBtn} onClick={()=>setScreen("select")}>← 그만두기</button>
-
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <span style={{fontSize:"13px",color:COLORS.textDim}}>
-              {isFill ? "✏️ 괄호 문제" : "⭕ OX 퀴즈"} · {unit.title.split(".")[0]}
-            </span>
-            <span style={{fontSize:"13px",color:COLORS.accent,fontWeight:700}}>
-              {streak > 0 && `🔥${streak}`} {score}/{answered}
-            </span>
-          </div>
-          <div style={styles.progress}>
-            <div style={{...styles.progressFill,width:`${((qIdx+1)/total)*100}%`}}/>
-          </div>
-
-          <div style={styles.qCard}>
-            <div style={styles.qNum}>Q{qIdx+1} / {total}</div>
-            <div style={styles.qText}>
-              {isFill ? q[0].replace(/\( \)/g,"(　　　)").replace(/\(\)/g,"(　　　)") : q[0]}
-            </div>
-
-            {isFill ? (
-              <>
-                <input
-                  style={{...styles.input,borderColor:showFeedback?(isCorrectFill()?COLORS.correct:COLORS.wrong):COLORS.border}}
-                  value={userAns}
-                  onChange={e=>!showFeedback&&setUserAns(e.target.value)}
-                  onKeyDown={e=>{if(e.key==="Enter"){if(showFeedback)next();else checkFill();}}}
-                  placeholder={Array.isArray(q[1])&&q[1].length>1?"정답을 쉼표(,)로 구분하여 입력":"정답을 입력하세요"}
-                  autoFocus
-                  readOnly={showFeedback}
-                />
-                {!showFeedback && <button style={styles.submitBtn} onClick={checkFill}>확인</button>}
-              </>
-            ) : (
-              <div style={{display:"flex",gap:12}}>
-                <button
-                  style={{...styles.oxBtn,
-                    borderColor:showFeedback?(q[1]?COLORS.correct:(oxChoice===true?COLORS.wrong:COLORS.border)):oxChoice===true?COLORS.accent:COLORS.border,
-                    color:showFeedback?(q[1]?COLORS.correct:(oxChoice===true?COLORS.wrong:COLORS.textDim)):oxChoice===true?COLORS.accent:COLORS.text,
-                    background:showFeedback&&q[1]?"rgba(46,160,67,0.1)":"transparent"
-                  }}
-                  onClick={()=>checkOX(true)}
-                >⭕</button>
-                <button
-                  style={{...styles.oxBtn,
-                    borderColor:showFeedback?(!q[1]?COLORS.correct:(oxChoice===false?COLORS.wrong:COLORS.border)):oxChoice===false?COLORS.accent:COLORS.border,
-                    color:showFeedback?(!q[1]?COLORS.correct:(oxChoice===false?COLORS.wrong:COLORS.textDim)):oxChoice===false?COLORS.accent:COLORS.text,
-                    background:showFeedback&&!q[1]?"rgba(46,160,67,0.1)":"transparent"
-                  }}
-                  onClick={()=>checkOX(false)}
-                >❌</button>
-              </div>
-            )}
-
-            {showFeedback && (
-              <div style={{
-                ...styles.feedback,
-                background: (isFill ? isCorrectFill() : oxChoice===q[1]) ? "rgba(46,160,67,0.12)" : "rgba(248,81,73,0.12)",
-                border: `1px solid ${(isFill ? isCorrectFill() : oxChoice===q[1]) ? COLORS.correct : COLORS.wrong}`
-              }}>
-                <div style={{fontWeight:700,marginBottom:4}}>
-                  {(isFill ? isCorrectFill() : oxChoice===q[1]) ? "✅ 정답!" : "❌ 오답"}
-                </div>
-                {isFill ? (
-                  <div>정답: <strong style={{color:COLORS.accent}}>{getFillCorrect()}</strong></div>
-                ) : (
-                  <div>
-                    <div>정답: <strong style={{color:COLORS.accent}}>{q[1] ? "⭕" : "❌"}</strong></div>
-                    {q[2] && <div style={{marginTop:4,color:COLORS.textDim,fontSize:"13px"}}>{q[2]}</div>}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {showFeedback && (
-              <button style={{...styles.submitBtn,marginTop:12}} onClick={next}>
-                {qIdx+1 >= total ? "🏁 결과 보기" : "다음 문제 →"}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
+    card.appendChild(inp);
+    if(!ST.showFeedback){
+      const sub=el('button','btn btn-gold','확인');
+      sub.style.cssText='width:100%;margin-top:10px;';
+      sub.onclick=checkFill;
+      card.appendChild(sub);
+    }
+    setTimeout(()=>{const i=document.querySelector('.q-input');if(i)i.focus();},50);
+  } else {
+    const oxRow=el('div','ox-row');
+    ['true','false'].forEach(val=>{
+      const btn=el('button','ox-btn',val==='true'?'⭕':'❌');
+      btn.dataset.val=val;
+      btn.style.color=val==='true'?'var(--correct)':'var(--wrong)';
+      btn.style.borderColor=val==='true'?'#2ea04344':'#f8514944';
+      btn.onclick=()=>checkOX(val==='true');
+      oxRow.appendChild(btn);
+    });
+    card.appendChild(oxRow);
   }
 
-  return null;
+  if(ST.showFeedback){
+    const ok=isFill?checkFillCorrect(q):ST.oxChoice===q[1];
+    const ans=isFill?(Array.isArray(q[1])?q[1].join(', '):q[1]):(q[1]?'⭕':'❌');
+    const fb=el('div','fb '+(ok?'ok':'err'));
+    fb.id='fb-block';
+    fb.innerHTML=`<b>${ok?'✅ 정답!':'❌ 오답'}</b><br>정답: <span class="fb-ans">${ans}</span>`;
+    if(!isFill&&q[2]){const d=el('div','fb-exp');d.textContent=q[2];fb.appendChild(d);}
+    card.appendChild(fb);
+    const nextBtn=el('button','btn btn-gold');
+    nextBtn.id='next-btn';
+    nextBtn.style.cssText='width:100%;margin-top:10px;';
+    nextBtn.textContent=ST.qIdx+1>=total?'🏁 결과 보기':'다음 문제 →';
+    nextBtn.onclick=()=>{
+      if(ST.qIdx+1>=total){ST.screen='result';render();}
+      else{ST.qIdx++;ST.userAns='';ST.oxChoice=null;ST.showFeedback=false;render();}
+    };
+    card.appendChild(nextBtn);
+  }
+
+  body.appendChild(card);
+  app.appendChild(body);
 }
+
+function checkFillCorrect(q){
+  const ans=Array.isArray(q[1])?q[1]:[q[1]];
+  const ut=ST.userAns.trim().replace(/\s+/g,'');
+  if(ans.length===1)return ans.some(a=>a.split('/').some(v=>ut===v.replace(/\s+/g,'')||ut.includes(v.replace(/\s+/g,''))));
+  const parts=ST.userAns.split(/[,，、\s]+/).map(s=>s.trim()).filter(Boolean);
+  return ans.every(a=>a.split('/').some(v=>parts.some(p=>p.replace(/\s+/g,'')===v.replace(/\s+/g,'')||p.includes(v))));
+}
+
+/* ── RESULT ── */
+function renderResult(app){
+  app.appendChild(mkHeader());
+  const body=el('div','body');
+  const u=unit();
+  const total=ST.questions.length;
+  const pct=Math.round(ST.score/total*100);
+  const grade=pct>=90?'🏆 완벽!':pct>=70?'👏 우수!':pct>=50?'💪 노력!':'📖 복습!';
+
+  const box=el('div','score-box');
+  box.innerHTML=`<div style="font-size:44px;margin-bottom:8px">${grade}</div>
+  <div class="score-big">${ST.score}<span style="font-size:22px;color:var(--dim)">/${total}</span></div>
+  <div class="score-pct">${pct}점</div>
+  <div class="score-streak">최대 연속 정답: ${ST.maxStreak}개 🔥</div>`;
+
+  const row=el('div','btn-row');
+  row.style.justifyContent='center';
+  row.style.marginTop='20px';
+
+  const retry=el('button','btn btn-gold','🔄 다시 풀기');
+  retry.onclick=()=>startQuiz(u,ST.mode);
+  const other=el('button','btn-ghost','📚 다른 모드');
+  other.onclick=()=>{ST.screen='select';render();};
+  const home=el('button','btn-ghost','🏠 단원 선택');
+  home.onclick=()=>{ST.screen='home';render();};
+  row.appendChild(retry);row.appendChild(other);row.appendChild(home);
+  box.appendChild(row);
+  body.appendChild(box);
+  app.appendChild(body);
+}
+
+/* ── INIT ── */
+render();
+</script>
+</body>
+</html>
